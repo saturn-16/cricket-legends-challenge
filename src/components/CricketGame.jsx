@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, Trophy, XCircle } from 'lucide-react';
+import { Trophy, XCircle } from 'lucide-react';
 
 const CricketGame = () => {
   const canvasRef = useRef(null);
@@ -14,11 +14,12 @@ const CricketGame = () => {
     batsman: null,
     fielders: [],
     ballInAir: false,
-    ballSpeed: 5,
+    ballSpeed: 7,
     hitBall: null,
     hitBallVelocity: null,
     catchAttempt: null,
-    animationId: null
+    animationId: null,
+    waitingForNextBall: false
   });
 
   useEffect(() => {
@@ -54,10 +55,11 @@ const CricketGame = () => {
       game.ball = null;
       game.hitBall = null;
       game.ballInAir = false;
+      game.waitingForNextBall = false;
     };
     
     const startBallDelivery = () => {
-      if (gameState !== 'playing') return;
+      if (gameState !== 'playing' || game.waitingForNextBall) return;
       
       game.ball = {
         x: canvas.width / 2,
@@ -76,18 +78,20 @@ const CricketGame = () => {
       if (!game.ball) return false;
       
       const batsmanTop = game.batsman.y - 20;
-      const perfectZoneStart = batsmanTop - 25;
-      const perfectZoneEnd = batsmanTop + 25;
+      const perfectZoneStart = batsmanTop - 15;
+      const perfectZoneEnd = batsmanTop + 15;
       
       return game.ball.y >= perfectZoneStart && game.ball.y <= perfectZoneEnd;
     };
     
     const hitBall = () => {
-      if (!game.ball || !game.ballInAir || game.hitBall) return;
+      if (!game.ball || !game.ballInAir || game.hitBall || game.waitingForNextBall) return;
       
       const isPerfectTiming = checkTiming();
       
       if (isPerfectTiming) {
+        game.waitingForNextBall = true;
+        
         if (game.ball.isTrap) {
           const targetFielder = game.fielders[Math.floor(Math.random() * game.fielders.length)];
           const angle = Math.atan2(targetFielder.y - game.ball.y, targetFielder.x - game.ball.x);
@@ -109,8 +113,8 @@ const CricketGame = () => {
           game.hitBall = {
             x: game.ball.x,
             y: game.ball.y,
-            vx: Math.cos(angle) * 13,
-            vy: Math.sin(angle) * 13,
+            vx: Math.cos(angle) * 14,
+            vy: Math.sin(angle) * 14,
             radius: 6,
             trail: [],
             isTrap: false
@@ -122,8 +126,8 @@ const CricketGame = () => {
           const dy = game.hitBall.y - fielder.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (!game.hitBall.isTrap || dist > 50) {
-            fielder.vx = (dx / dist) * 3;
-            fielder.vy = (dy / dist) * 3;
+            fielder.vx = (dx / dist) * 3.5;
+            fielder.vy = (dy / dist) * 3.5;
           }
         });
         
@@ -131,18 +135,22 @@ const CricketGame = () => {
         game.ballInAir = false;
         
         setTimeout(() => {
-          if (game.catchAttempt === null) {
+          if (game.catchAttempt === null && gameState === 'playing') {
             setScore(prev => prev + 6);
             setSixesInRow(prev => prev + 1);
             setBallsLeft(prev => {
               const newBalls = prev - 1;
               if (newBalls > 0) {
-                setTimeout(() => startBallDelivery(), 1000);
+                setTimeout(() => {
+                  game.waitingForNextBall = false;
+                  startBallDelivery();
+                }, 500);
               }
               return newBalls;
             });
           }
-        }, 2000);
+          game.waitingForNextBall = false;
+        }, 2500);
       } else {
         endGame(false, 'Mistimed! You need perfect timing for sixes!');
       }
@@ -154,6 +162,7 @@ const CricketGame = () => {
       game.ball = null;
       game.hitBall = null;
       game.ballInAir = false;
+      game.waitingForNextBall = false;
     };
     
     const drawField = () => {
@@ -186,11 +195,11 @@ const CricketGame = () => {
       
       const batsmanTop = game.batsman.y - 20;
       ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
-      ctx.fillRect(canvas.width / 2 - 60, batsmanTop - 25, 120, 50);
+      ctx.fillRect(canvas.width / 2 - 50, batsmanTop - 15, 100, 30);
       
       ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(canvas.width / 2 - 60, batsmanTop - 25, 120, 50);
+      ctx.strokeRect(canvas.width / 2 - 50, batsmanTop - 15, 100, 30);
     };
     
     const drawBatsman = () => {
@@ -264,11 +273,11 @@ const CricketGame = () => {
         game.hitBall.trail.push({ x: game.hitBall.x, y: game.hitBall.y });
         if (game.hitBall.trail.length > 30) game.hitBall.trail.shift();
         
-        if (game.hitBall.y < 0 || game.hitBall.x < 0 || game.hitBall.x > canvas.width) {
+        if (game.hitBall.y < -50 || game.hitBall.x < -50 || game.hitBall.x > canvas.width + 50) {
           game.hitBall = null;
         }
         
-        if (game.catchAttempt === null) {
+        if (game.catchAttempt === null && game.hitBall) {
           game.fielders.forEach(fielder => {
             const dx = game.hitBall.x - fielder.x;
             const dy = game.hitBall.y - fielder.y;
