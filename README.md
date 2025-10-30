@@ -30,14 +30,5 @@ npm run dev
 npm run build
 ```
 
-## Deploy
-
-The `dist` folder can be deployed to any static hosting service like:
-- GitHub Pages
-- Netlify
-- Vercel
-- Surge
-
----
 
 Made with ❤️ for cricket fans
