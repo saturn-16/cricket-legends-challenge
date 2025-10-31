@@ -15,6 +15,9 @@ A fun cricket game where you need to hit 6 consecutive sixes to save Virat Kohli
 - Miss or mistime = Game Over
 - Beware: Some balls are traps set by the bowler!
 
+##Game 
+Link - https://cricket-legends-challenge-vkub.vercel.app/
+
 ## Installation
 ```bash
 npm install
