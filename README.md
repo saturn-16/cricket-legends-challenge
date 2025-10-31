@@ -16,7 +16,7 @@ A fun cricket game where you need to hit 6 consecutive sixes to save Virat Kohli
 - Beware: Some balls are traps set by the bowler!
 
 ##Game 
-Link - https://cricket-legends-challenge-vkub.vercel.app/
+Link - https://cricket-legends-challenge-4uos.vercel.app/
 
 ## Installation
 ```bash
